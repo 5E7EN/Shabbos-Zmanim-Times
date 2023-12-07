@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Shabbos Zmanim</title>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
 
         <style>
             body {
@@ -66,6 +67,10 @@
                     opacity: 0;
                 }
             }
+
+            .github-fork-ribbon.right-bottom:before {
+                background-color: #090;
+            }
         </style>
     </head>
     <body>
@@ -85,6 +90,16 @@
         </table>
 
         <div class="notification" id="copyNotification">Copied to clipboard!</div>
+
+        <!-- Fork me! -->
+        <a
+            class="github-fork-ribbon right-bottom fixed"
+            href="https://github.com/5E7EN/Shabbos-Zmanim-Times"
+            target="_blank"
+            data-ribbon="Fork me on GitHub"
+            title="Fork me on GitHub"
+            >Fork me on GitHub</a
+        >
 
         <script>
             let parashaUpdated = false;
