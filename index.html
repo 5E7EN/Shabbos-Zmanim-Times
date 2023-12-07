@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Shabbos Times</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" />
+
+        <style>
+            body {
+                font-family: 'Open Sans', sans-serif;
+            }
+            h1 {
+                text-align: center;
+                font-weight: 700;
+            }
+
+            table {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th,
+            td {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+                cursor: pointer;
+                transition: background-color 0.5s;
+            }
+
+            th {
+                background-color: #f2f2f2;
+            }
+
+            tr:nth-child(even) {
+                background-color: #dddddd;
+            }
+
+            .notification {
+                position: fixed;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #4caf50;
+                color: white;
+                padding: 15px;
+                border-radius: 5px;
+                display: none;
+                animation: fadeInOut 2s ease-in-out;
+            }
+
+            @keyframes fadeInOut {
+                0% {
+                    opacity: 0;
+                }
+                10% {
+                    opacity: 1;
+                }
+                90% {
+                    opacity: 1;
+                }
+                100% {
+                    opacity: 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1 id="shabbosTitle">Shabbos Zmanim Times</h1>
+
+        <table id="shabbosTable">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="copy-cell">Candle Lighting</th>
+                    <th class="copy-cell">Shkiya</th>
+                    <th class="copy-cell">Havdalah</th>
+                    <th class="copy-cell">72 Minutes</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="notification" id="copyNotification">Copied to clipboard!</div>
+
+        <script>
+            let parashaUpdated = false;
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                const cities = [
+                    { name: 'Brooklyn (Flatbush)', zip: '11226' },
+                    { name: 'Baltimore', zip: '21215' },
+                    { name: 'Chicago', zip: '60657' },
+                    { name: 'Cleveland', zip: '44118' },
+                    { name: 'Five Towns', zip: '11516' },
+                    { name: 'Lakewood', zip: '08701' },
+                    { name: 'Los Angeles', zip: '90029' },
+                    { name: 'Miami', zip: '33140' },
+                    { name: 'Monsey', zip: '10952' },
+                    { name: 'Passaic', zip: '07055' },
+                    { name: 'Queens', zip: '11375' },
+                    { name: 'Staten Island', zip: '10314' },
+                    { name: 'Waterbury', zip: '06710' },
+                    { name: 'Jerusalem', latitude: '31.791438', longitude: '35.222813', timezoneID: 'Asia/Jerusalem' },
+                    { name: 'Toronto', legacyCityID: 'CA-Toronto' }
+                ];
+
+                const shabbosTable = document.getElementById('shabbosTable');
+                const notification = document.getElementById('copyNotification');
+
+                async function fetchData(city) {
+                    try {
+                        // Step 1: Fetch Zmanim times using the first API
+                        let zmanimResponse, zmanimData;
+
+                        if (city.zip) {
+                            zmanimResponse = await fetch(`https://www.hebcal.com/shabbat?cfg=json&M=on&a=on&zip=${city.zip}`);
+                        } else if (city.latitude && city.longitude && city.timezoneID) {
+                            zmanimResponse = await fetch(
+                                `https://www.hebcal.com/shabbat?cfg=json&M=on&a=on&latitude=${city.latitude}&longitude=${city.longitude}&tzid=${city.timezoneID}`
+                            );
+                        } else if (city.legacyCityID) {
+                            zmanimResponse = await fetch(`https://www.hebcal.com/shabbat?cfg=json&M=on&a=on&city=${city.legacyCityID}`);
+                        }
+
+                        zmanimData = await zmanimResponse.json();
+
+                        // Extract Candle lighting and Havdalah times
+                        const candleLightingTime = zmanimData.items.find((item) => item.category === 'candles').date;
+                        const havdalahTime = zmanimData.items.find((item) => item.category === 'havdalah').date;
+
+                        // Extract this week's Parasha
+                        const parashaName = zmanimData.items.find((item) => item.category === 'parashat').title;
+
+                        // Step 2: Fetch additional Zmanim using the second API
+                        let zmanimDetailsResponse, zmanimDetailsData;
+
+                        if (city.zip) {
+                            zmanimDetailsResponse = await fetch(`https://www.hebcal.com/zmanim?cfg=json&date=${havdalahTime.split('T')[0]}&zip=${city.zip}`);
+                        } else if (city.latitude && city.longitude && city.timezoneID) {
+                            zmanimDetailsResponse = await fetch(
+                                `https://www.hebcal.com/zmanim?cfg=json&date=${havdalahTime.split('T')[0]}&latitude=${city.latitude}&longitude=${city.longitude}&tzid=${
+                                    city.timezoneID
+                                }`
+                            );
+                        } else if (city.legacyCityID) {
+                            zmanimDetailsResponse = await fetch(`https://www.hebcal.com/zmanim?cfg=json&date=${havdalahTime.split('T')[0]}&city=${city.legacyCityID}`);
+                        }
+
+                        zmanimDetailsData = await zmanimDetailsResponse.json();
+
+                        // Extract Sunset and Tzeit 72 minutes times
+                        const sunsetTime = zmanimDetailsData.times.sunset;
+                        const tzeit72minTime = zmanimDetailsData.times.tzeit72min;
+
+                        // Step 3: Update the table and header with the extracted data
+                        updateParasha(parashaName);
+                        updateTable(city.name, candleLightingTime, sunsetTime, havdalahTime, tzeit72minTime);
+                    } catch (error) {
+                        console.error('Error fetching data:', error);
+                    }
+                }
+
+                function formatTime(timestamp) {
+                    const date = new Date(timestamp);
+                    return date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+                }
+
+                function updateParasha(name) {
+                    if (!parashaUpdated) {
+                        const h1Title = document.getElementById('shabbosTitle');
+                        h1Title.innerText += ` - ${name}`;
+
+                        parashaUpdated = true;
+                    }
+                }
+
+                function updateTable(city, candleLighting, sunset, havdalah, tzeit72min) {
+                    // Find the row corresponding to the city
+                    let row = Array.from(shabbosTable.querySelectorAll('tbody tr')).find((tr) => tr.querySelector('.copy-cell').innerText === city);
+
+                    // If the row doesn't exist, create a new one
+                    if (!row) {
+                        const newRow = document.createElement('tr');
+                        newRow.innerHTML = `
+                            <td class="copy-cell">${city}</td>
+                            <td class="copy-cell"></td>
+                            <td class="copy-cell"></td>
+                            <td class="copy-cell"></td>
+                            <td class="copy-cell"></td>
+                        `;
+                        shabbosTable.querySelector('tbody').appendChild(newRow);
+                        row = newRow;
+                    }
+
+                    // Update the cell values with formatted times
+                    row.querySelector('.copy-cell:nth-child(2)').innerText = formatTime(candleLighting);
+                    row.querySelector('.copy-cell:nth-child(3)').innerText = formatTime(sunset);
+                    row.querySelector('.copy-cell:nth-child(4)').innerText = formatTime(havdalah);
+                    row.querySelector('.copy-cell:nth-child(5)').innerText = formatTime(tzeit72min);
+                }
+
+                for (const city of cities) {
+                    await fetchData(city);
+                }
+
+                // Add click-to-copy to cells
+                const copyCells = document.querySelectorAll('.copy-cell');
+                copyCells.forEach((cell) => {
+                    cell.addEventListener('click', function () {
+                        const textToCopy = this.innerText;
+
+                        navigator.clipboard
+                            .writeText(textToCopy)
+                            .then(function () {
+                                // Show "copied" notification box
+                                notification.style.display = 'block';
+
+                                // Hide notification box after a couple seconds
+                                setTimeout(function () {
+                                    notification.style.display = 'none';
+                                }, 2000);
+
+                                // Highlight the clicked cell
+                                cell.style.backgroundColor = '#d4edda';
+
+                                // Reset the background color after a delay
+                                setTimeout(() => (cell.style.backgroundColor = ''), 1000);
+                            })
+                            .catch(function (err) {
+                                console.error('Unable to copy to clipboard', err);
+                            });
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
