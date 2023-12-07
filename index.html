@@ -133,7 +133,7 @@
                         const havdalahTime = zmanimData.items.find((item) => item.category === 'havdalah').date;
 
                         // Extract this week's Parasha
-                        const parashaName = zmanimData.items.find((item) => item.category === 'parashat').title;
+                        const parashaName = zmanimData.items.find((item) => item.category === 'parashat').hebrew;
 
                         // Step 2: Fetch additional Zmanim using the second API
                         let zmanimDetailsResponse, zmanimDetailsData;
