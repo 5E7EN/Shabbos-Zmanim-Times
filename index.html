@@ -164,8 +164,27 @@
                 }
 
                 function formatTime(timestamp) {
-                    const date = new Date(timestamp);
-                    return date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+                    const timeRegex = /(\d{2}:\d{2})/;
+                    const timeMatches = timestamp.match(timeRegex);
+
+                    // Check if a match is found
+                    if (timeMatches && timeMatches[1]) {
+                        // Extract matched time
+                        const timeString = timeMatches[1];
+
+                        // Convert to 12-hour format with AM/PM
+                        const [hours, minutes] = timeString.split(':');
+                        const parsedHours = parseInt(hours, 10);
+                        const timeSuffix = parsedHours >= 12 ? 'PM' : 'AM';
+                        const convertedHours = parsedHours % 12 || 12;
+
+                        // Return formatted time
+                        return `${convertedHours}:${minutes} ${timeSuffix}`;
+                    } else {
+                        // Handle cases when time part is not found
+                        console.error('Unable to extract time from the timestamp');
+                        return null;
+                    }
                 }
 
                 function updateParasha(name) {
@@ -196,10 +215,10 @@
                     }
 
                     // Update the cell values with formatted times
-                    row.querySelector('.copy-cell:nth-child(2)').innerText = formatTime(candleLighting);
-                    row.querySelector('.copy-cell:nth-child(3)').innerText = formatTime(sunset);
-                    row.querySelector('.copy-cell:nth-child(4)').innerText = formatTime(havdalah);
-                    row.querySelector('.copy-cell:nth-child(5)').innerText = formatTime(tzeit72min);
+                    row.querySelector('.copy-cell:nth-child(2)').innerText = formatTime(candleLighting) || '<INVALID TIMESTAMP>';
+                    row.querySelector('.copy-cell:nth-child(3)').innerText = formatTime(sunset) || '<INVALID TIMESTAMP>';
+                    row.querySelector('.copy-cell:nth-child(4)').innerText = formatTime(havdalah) || '<INVALID TIMESTAMP>';
+                    row.querySelector('.copy-cell:nth-child(5)').innerText = formatTime(tzeit72min) || '<INVALID TIMESTAMP>';
                 }
 
                 for (const city of cities) {
