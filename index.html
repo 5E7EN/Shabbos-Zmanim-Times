@@ -3,13 +3,14 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Shabbos Times</title>
+        <title>Shabbos Zmanim</title>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" />
 
         <style>
             body {
                 font-family: 'Open Sans', sans-serif;
             }
+
             h1 {
                 text-align: center;
                 font-weight: 700;
@@ -151,7 +152,7 @@
 
                         zmanimDetailsData = await zmanimDetailsResponse.json();
 
-                        // Extract Sunset and Tzeit 72 minutes times
+                        // Extract sunset and Rabbeinu Tam
                         const sunsetTime = zmanimDetailsData.times.sunset;
                         const tzeit72minTime = zmanimDetailsData.times.tzeit72min;
 
